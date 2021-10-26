@@ -1,3 +1,4 @@
+-- Selecting all the months for analysis
 WITH 
 all_months as(
 SELECT *
