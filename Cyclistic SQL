@@ -104,103 +104,49 @@ SELECT
     end_lat,
     end_lng,
     member_casual
-FROM `bikeshare-project-326818.Divvy.April 2021`
-UNION ALL
-SELECT 
-    ride_id,
-    rideable_type,
-    started_at,
-    ended_at,
-    start_station_name,
-    safe_cast(`start_station_id` as int),
-    end_station_name,
-    safe_cast(`end_station_id` as int),
-    start_lat,
-    start_lng,
-    end_lat,
-    end_lng,
-    member_casual
-FROM `bikeshare-project-326818.Divvy.May 2021`
-UNION ALL
-SELECT 
-    ride_id,
-    rideable_type,
-    started_at,
-    ended_at,
-    start_station_name,
-    safe_cast(`start_station_id` as int),
-    end_station_name,
-    safe_cast(`end_station_id` as int),
-    start_lat,
-    start_lng,
-    end_lat,
-    end_lng,
-    member_casual
-FROM `bikeshare-project-326818.Divvy.June 2021`
-UNION ALL
-SELECT 
-    ride_id,
-    rideable_type,
-    started_at,
-    ended_at,
-    start_station_name,
-    safe_cast(`start_station_id` as int),
-    end_station_name,
-    safe_cast(`end_station_id` as int),
-    start_lat,
-    start_lng,
-    end_lat,
-    end_lng,
-    member_casual
-FROM `bikeshare-project-326818.Divvy.July 2021`
-UNION ALL
-SELECT 
-    ride_id,
-    rideable_type,
-    started_at,
-    ended_at,
-    start_station_name,
-    safe_cast(`start_station_id` as int),
-    end_station_name,
-    safe_cast(`end_station_id` as int),
-    start_lat,
-    start_lng,
-    end_lat,
-    end_lng,
-    member_casual
-FROM `bikeshare-project-326818.Divvy.August 2021`),
--- Calculate and round up average latitude and longitude for each station to improve accuracy for coordinates
--- Adding a column to show length of ride and removing any negative and large values for ride length to limit analysis for 1 day trips
-ride_length AS(
-    SELECT *,
-    TIMESTAMP_DIFF(ended_at, started_at, MINUTE) AS ride_length_minute,
-    TRIM(REPLACE(REPLACE(start_station_name,'(*)',''),'(Temp)','')) as clean_start_station_name,
-    TRIM(REPLACE(REPLACE(end_station_name,'(*)',''),'(Temp)','')) as clean_end_station_name,
-    FROM all_months
-    WHERE 
-    TIMESTAMP_DIFF(ended_at, started_at, MINUTE) between 0 and 1440),
-average_station AS(
+FROM `bikeshare-project-326818.Divvy.April 2021`),
+-- Make sure duplicates are removed for start station name and end station name and calculate and round up average latitude and longitude for each station to improve accuracy for coordinates
+-- Adding a column to show length of ride, separating start/end time and date and removing any negative and large values for ride length and removing test/maintenance rides from dataset
+clean_station AS(
     SELECT
     ride_id,
-    clean_start_station_name,
-    clean_end_station_name,
-    ROUND(AVG(start_lat),3) as new_start_lat,
-    ROUND(AVG(start_lng),3) as new_start_lng,
-    ROUND(AVG(end_lat),3) as new_end_lat,
-    ROUND(AVG(end_lng),3) as new_end_lng
-    FROM ride_length
-    GROUP BY
-    clean_start_station_name,
-    clean_end_station_name,
-    ride_id),
-clean_data AS(
-SELECT *
-FROM ride_length
-LEFT JOIN average_station
-ON ride_length.ride_id = average_station.ride_id)
-SELECT *
-EXCEPT (start_station_name,end_station_name,start_lat,start_lng,end_lat,end_lng)
-FROM clean_data
+    rideable_type,
+    member_casual,
+    TIMESTAMP_DIFF(ended_at, started_at, MINUTE) AS ride_length_minute,
+    EXTRACT(date from started_at) AS started_date,
+    EXTRACT(date from ended_at) AS ended_date,
+    EXTRACT(time from started_at) AS started_time,
+    EXTRACT(time from ended_at) AS ended_time,
+    FROM all_months
+    WHERE 
+    TIMESTAMP_DIFF(ended_at, started_at, MINUTE) between 1 and 1440),
+average_station AS(
+        SELECT
+        DISTINCT 
+        TRIM(REPLACE(REPLACE(start_station_name,'(*)',''),'(Temp)','')) start_station_name,
+        TRIM(REPLACE(REPLACE(start_station_name,'(*)',''),'(Temp)','')) end_station_name,
+        ROUND(AVG(start_lat),3) as start_lat,
+        ROUND(AVG(start_lng),3) as start_lng,
+        ROUND(AVG(end_lat),3) as end_lat,
+        ROUND(AVG(end_lng),3) as end_lng,
+        ride_id
+        FROM (SELECT ride_id,start_station_name,end_station_name,start_lat,start_lng,end_lat,end_lng
+                FROM all_months
+                WHERE 
+                start_station_name NOT LIKE '%TEST%' AND end_station_name NOT LIKE '%TEST%')
+        GROUP BY
+        start_station_name,
+        end_station_name,
+        ride_id),
+final_table AS(
+            SELECT *
+            FROM average_station 
+            LEFT JOIN clean_station
+            ON average_station.ride_id = clean_station.ride_id)
+SELECT * 
+FROM final_table
+
+
 
 
 
