@@ -105,7 +105,7 @@ SELECT
     end_lng,
     member_casual
 FROM `bikeshare-project-326818.Divvy.April 2021`),
--- Make sure duplicates are removed for start station name and end station name and calculate and round up average latitude and longitude for each station to improve accuracy for coordinates
+-- Make sure duplicates are removed for start station name and end station name 
 -- Adding a column to show length of ride, separating start/end time and date and removing any negative and large values for ride length and removing test/maintenance rides from dataset
 clean_station AS(
     SELECT
@@ -120,6 +120,8 @@ clean_station AS(
     FROM all_months
     WHERE 
     TIMESTAMP_DIFF(ended_at, started_at, MINUTE) between 1 and 1440),
+-- Calculate and round up average latitude and longitude for each station to improve accuracy for coordinates
+-- Clean station names and remove any testing locations 
 average_station AS(
         SELECT
         DISTINCT 
@@ -138,6 +140,7 @@ average_station AS(
         start_station_name,
         end_station_name,
         ride_id),
+-- Combine cleaned tables containing clean station names and updated latitude and longitude coordinates
 final_table AS(
             SELECT *
             FROM average_station 
