@@ -1,6 +1,6 @@
 # Cyclistic-Case-Study
 
-This repository contains a SQL file made in BigQuery with data obtained from Motivate International about a bike sharing company called Divvy. The original dataset contains 12 months worth of data split into 12 csv files for each month. I uploaded each spreadsheet into BigQuery and did the following:
+This repository contains a SQL file made in BigQuery with data obtained from Motivate International about a bike sharing company called Divvy. The original dataset contains 12 months worth of data split into 12 csv files for each month. I uploaded each spreadsheet into BigQuery and wrote around 150 lines of SQL code to prepare the data for analysis:
 - Combined all the months
 - Added a column to calculate ride length
 - Removed testing locations, cleaned station names and removed duplicates
